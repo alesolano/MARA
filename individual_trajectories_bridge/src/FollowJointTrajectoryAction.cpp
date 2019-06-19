@@ -1,8 +1,6 @@
 #include "FollowJointTrajectoryAction.hpp"
 
-FollowJointTrajectoryAction::FollowJointTrajectoryAction(std::string name, ros::NodeHandle nh, rclcpp::Node::SharedPtr node_ros2) :
-  as_(nh, name, boost::bind(&FollowJointTrajectoryAction::executeCB, this, _1), false),
-  action_name_(name)
+FollowJointTrajectoryAction::FollowJointTrajectoryAction(std::string name, ros::NodeHandle nh, rclcpp::Node::SharedPtr node_ros2) : as_(nh, name, boost::bind(&FollowJointTrajectoryAction::executeCB, this, _1), false), action_name_(name)
 {
   as_.start();
   this->node_ros2 = node_ros2;
@@ -92,11 +90,22 @@ void FollowJointTrajectoryAction::executeCB(const control_msgs::FollowJointTraje
 
 
   printf("Sending goal\n");
-  std::function<void( rclcpp_action::ClientGoalHandle<hrim_actuator_rotaryservo_actions::action::GoalJointTrajectory>::SharedPtr,
-                      const std::shared_ptr<const hrim_actuator_rotaryservo_actions::action::GoalJointTrajectory::Feedback> feedback )> cb_function = std::bind(
-        &FollowJointTrajectoryAction::feedback_callback, this, std::placeholders::_1,  std::placeholders::_2);
+  // std::function<void( rclcpp_action::ClientGoalHandle<hrim_actuator_rotaryservo_actions::action::GoalJointTrajectory>::SharedPtr,
+  //                     const std::shared_ptr<const hrim_actuator_rotaryservo_actions::action::GoalJointTrajectory::Feedback> feedback )> cb_function = std::bind(
+  //       &FollowJointTrajectoryAction::feedback_callback, this, std::placeholders::_1,  std::placeholders::_2);
+  bool goal_response_received = false;
+  auto send_goal_ops = rclcpp_action::Client<hrim_actuator_rotaryservo_actions::action::GoalJointTrajectory>::SendGoalOptions();
+  send_goal_ops.goal_response_callback =
+    [&goal_response_received]
+      (std::shared_future<typename rclcpp_action::ClientGoalHandle<hrim_actuator_rotaryservo_actions::action::GoalJointTrajectory>::SharedPtr> future) mutable
+    {
+      auto goal_handle = future.get();
+      if (goal_handle) {
+        goal_response_received = true;
+      }
+    };
 
-  auto goal_handle_future = action_client->async_send_goal(goal_msg, cb_function);
+  auto goal_handle_future = action_client->async_send_goal(goal_msg, send_goal_ops);
 
   if (goal_handle_future.wait_for(std::chrono::seconds(5s)) != std::future_status::ready)
   {
@@ -114,13 +123,13 @@ void FollowJointTrajectoryAction::executeCB(const control_msgs::FollowJointTraje
   auto result_future = action_client->async_get_result(goal_handle);
 
   RCLCPP_INFO(node_ros2->get_logger(), "Waiting for result %d seconds", ((int)wait_time) + 1);
-  printf("Waiting for result %d seconds\n", ((int)wait_time) + 1);
+
   if (result_future.wait_for(std::chrono::seconds(((int)wait_time) + 1 )) != std::future_status::ready){
     RCLCPP_ERROR(node_ros2->get_logger(), "get result call failed :(");
     return;
   }
 
-  rclcpp_action::ClientGoalHandle<hrim_actuator_rotaryservo_actions::action::GoalJointTrajectory>::Result result = result_future.get();
+  rclcpp_action::ClientGoalHandle<hrim_actuator_rotaryservo_actions::action::GoalJointTrajectory>::WrappedResult result = result_future.get();
 
   switch(result.code) {
     case rclcpp_action::ResultCode::SUCCEEDED:

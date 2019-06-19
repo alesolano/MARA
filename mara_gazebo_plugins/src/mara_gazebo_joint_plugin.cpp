@@ -39,7 +39,7 @@ void MARAGazeboPluginRosPrivate::handle_trajectory_axis2_accepted(const std::sha
     const std::array<uint8_t, 16> & uuid,
     std::shared_ptr<const hrim_actuator_rotaryservo_actions::action::GoalJointTrajectory::Goal>)
   {
-    RCUTILS_LOG_INFO_NAMED("hros_actuation_servomotor_hans_lifecycle", "Got goal axis1 request");
+    RCUTILS_LOG_INFO_NAMED("hros_actuator_rotaryservo_hans_lifecycle", "Got goal axis1 request");
     (void)uuid;
     if(goal_handle_axis1_!=NULL){
       if(goal_handle_axis1_->is_active()){
@@ -59,7 +59,7 @@ void MARAGazeboPluginRosPrivate::handle_trajectory_axis2_accepted(const std::sha
     const std::array<uint8_t, 16> & uuid,
     std::shared_ptr<const hrim_actuator_rotaryservo_actions::action::GoalJointTrajectory::Goal>)
   {
-    RCUTILS_LOG_INFO_NAMED("hros_actuation_servomotor_hans_lifecycle", "Got goal axis2 request");
+    RCUTILS_LOG_INFO_NAMED("hros_actuator_rotaryservo_hans_lifecycle", "Got goal axis2 request");
     (void)uuid;
     if(goal_handle_axis2_!=NULL){
       if(goal_handle_axis2_->is_active()){
@@ -100,7 +100,7 @@ void MARAGazeboPluginRosPrivate::handle_trajectory_axis2_accepted(const std::sha
     const auto goal = goal_handle->get_goal();
 
     if( goal->trajectory.points.size() == 0){
-        RCUTILS_LOG_ERROR_NAMED("hros_actuation_servomotor_hans_lifecycle", "trajectoryAxis1Callback. Void trajectory.");
+        RCUTILS_LOG_ERROR_NAMED("hros_actuator_rotaryservo_hans_lifecycle", "trajectoryAxis1Callback. Void trajectory.");
         return;
     }
 
@@ -163,7 +163,7 @@ void MARAGazeboPluginRosPrivate::handle_trajectory_axis2_accepted(const std::sha
 
     auto result_response = std::make_shared<hrim_actuator_rotaryservo_actions::action::GoalJointTrajectory::Result>();
     result_response->error = 0;
-    goal_handle->set_succeeded(result_response);
+    goal_handle->succeed(result_response);
     RCLCPP_INFO(rclcpp::get_logger("server"), "Goal Suceeded");
   }
 
@@ -174,7 +174,7 @@ void MARAGazeboPluginRosPrivate::handle_trajectory_axis2_accepted(const std::sha
     const auto goal = goal_handle->get_goal();
 
     if( goal->trajectory.points.size() == 0){
-        RCUTILS_LOG_ERROR_NAMED("hros_actuation_servomotor_hans_lifecycle", "trajectoryAxis2Callback. Void trajectory.");
+        RCUTILS_LOG_ERROR_NAMED("hros_actuator_rotaryservo_hans_lifecycle", "trajectoryAxis2Callback. Void trajectory.");
         return;
     }
 
@@ -237,7 +237,7 @@ void MARAGazeboPluginRosPrivate::handle_trajectory_axis2_accepted(const std::sha
 
     auto result_response = std::make_shared<hrim_actuator_rotaryservo_actions::action::GoalJointTrajectory::Result>();
     result_response->error = 0;
-    goal_handle->set_succeeded(result_response);
+    goal_handle->succeed(result_response);
     RCLCPP_INFO(rclcpp::get_logger("server"), "Goal Suceeded");
 
   }
@@ -357,13 +357,13 @@ void MARAGazeboPluginRos::createGenericTopics(std::string node_name)
       std::bind(&MARAGazeboPluginRosPrivate::handle_trajectory_axis2_cancel, impl_.get(), std::placeholders::_1),
       std::bind(&MARAGazeboPluginRosPrivate::handle_trajectory_axis2_accepted, impl_.get(), std::placeholders::_1));
 
-  impl_->ros_node_->set_parameters({
-    rclcpp::Parameter("joint_name", node_name),
-    rclcpp::Parameter("origin", 0),
-    rclcpp::Parameter("publish_rate", 100),
-    rclcpp::Parameter("min_temperature", -25),
-    rclcpp::Parameter("max_temperature", 75),
-  });
+  // impl_->ros_node_->set_parameters({
+  //   rclcpp::Parameter("joint_name", node_name),
+  //   rclcpp::Parameter("origin", 0),
+  //   rclcpp::Parameter("publish_rate", 100),
+  //   rclcpp::Parameter("min_temperature", -25),
+  //   rclcpp::Parameter("max_temperature", 75),
+  // });
 
   impl_->timer_status_ = impl_->ros_node_->create_wall_timer(
       1s, std::bind(&MARAGazeboPluginRosPrivate::timer_status_msgs, impl_.get()));
@@ -651,8 +651,9 @@ void MARAGazeboPluginRosPrivate::IDService(
   (void)req;
 
   res->device_kind_id = hrim_generic_srvs::srv::ID::Response::HRIM_ACTUATOR;
-  res->hros_version = "Ardent";
-  res->hrim_version = "Anboto";
+  res->hros_version = "Dashing";
+  res->hrim_version = "Coliza";
+  res->device_name = "Servo";
 }
 
 void MARAGazeboPluginRosPrivate::URDFService(
